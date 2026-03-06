@@ -23,21 +23,15 @@ function actualizarIconosTema() {
         icon.classList.remove('material-symbols-outlined');
         if (isDark) {
             icon.innerHTML = `
-                <canvas class="avatarAnimeCanvas pointer-events-none z-[-1]" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px;" width="120" height="120"></canvas>
                 <span class="material-symbols-outlined relative z-10 text-3xl text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)] transition-transform duration-300 group-hover:scale-110" style="font-size: 32px; font-variation-settings: 'FILL' 1;">dark_mode</span>
             `;
         } else {
             icon.innerHTML = `
-                <canvas class="avatarAnimeCanvas pointer-events-none z-[-1]" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px;" width="120" height="120"></canvas>
                 <span class="material-symbols-outlined relative z-10 text-3xl text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] transition-transform duration-300 group-hover:scale-110" style="font-size: 32px; font-variation-settings: 'FILL' 1;">light_mode</span>
             `;
         }
 
-        const avatarCanvas = icon.querySelector('.avatarAnimeCanvas');
-        if (avatarCanvas) {
-            if (icon.avatarEngine) icon.avatarEngine.stop();
-            icon.avatarEngine = new AvatarParticleEngine(avatarCanvas, isDark ? 'shadow' : 'fire', isDark ? 0.35 : 1);
-        }
+        // El efecto de partículas en el avatar ha sido removido a petición del usuario
     });
 }
 

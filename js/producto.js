@@ -62,6 +62,8 @@ function renderizarDetalles(p) {
     productoRefs.errorMessage.classList.add('hidden');
     productoRefs.container.classList.remove('hidden');
 
+    const isAdmin = window.novaAuth && window.novaAuth.isAdmin();
+
     // Cambiar dinÃ¡micamente el tÃ­tulo de la pestaÃ±a HTML
     document.title = `${p.nombre} | WearStore`;
 
@@ -109,8 +111,8 @@ function renderizarDetalles(p) {
                     </div>
                     <div class="flex gap-4">
                         <div class="flex-1">
-                            <label class="text-xs text-slate-400 font-bold uppercase track">Precio Base (USD)</label>
-                            <input type="number" id="editPrecio" class="w-full bg-slate-800 text-white rounded-lg p-3 border border-slate-700 outline-none focus:border-cyan-500 mt-1" value="${p.precio}">
+                            <label class="text-xs text-slate-400 font-bold uppercase track">Precio Base (${window.CurrencyManager ? window.CurrencyManager.getCurrentCurrency() : 'USD'})</label>
+                            <input type="number" id="editPrecio" class="w-full bg-slate-800 text-white rounded-lg p-3 border border-slate-700 outline-none focus:border-cyan-500 mt-1" value="${window.CurrencyManager ? (p.precio * window.CurrencyManager.rates[window.CurrencyManager.getCurrentCurrency()]).toFixed(window.CurrencyManager.getCurrentCurrency() === 'COP' ? 0 : 2) : p.precio}">
                         </div>
                         <div class="flex-1">
                             <label class="text-xs text-slate-400 font-bold uppercase track">Unidades Stock</label>
@@ -172,24 +174,51 @@ function renderizarDetalles(p) {
 
                 <div class="mb-8 border-t border-b border-slate-100 dark:border-slate-800 py-6 transition-colors duration-300">
                     <h3 class="font-bold text-slate-900 dark:text-white mb-2 transition-colors duration-300">Acerca de este artículo</h3>
-                    <p class="text-slate-600 dark:text-slate-400 leading-relaxed text-sm transition-colors duration-300">${description}</p>
+                
+                <p class="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed max-w-prose text-sm md:text-base">${description}</p>
+                
+                ${p.id_tipo_producto === 2 ? `
+                <!-- Selector de Tallas -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center justify-between mb-3">
+                        <label class="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">Seleccionar Talla</label>
+                        <a href="#" class="text-xs text-cyan-500 hover:text-cyan-400 underline font-medium">Guía de tallas</a>
+                    </div>
+                    <div class="grid grid-cols-4 gap-3" id="sizeSelectorContainer">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="productoTalla" value="S" class="peer sr-only" checked />
+                            <div class="text-center py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 font-bold text-slate-500 dark:text-slate-400 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10 peer-checked:text-cyan-600 dark:peer-checked:text-cyan-400 transition-all hover:border-cyan-300 dark:hover:border-cyan-700">S</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="productoTalla" value="M" class="peer sr-only" />
+                            <div class="text-center py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 font-bold text-slate-500 dark:text-slate-400 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10 peer-checked:text-cyan-600 dark:peer-checked:text-cyan-400 transition-all hover:border-cyan-300 dark:hover:border-cyan-700">M</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="productoTalla" value="L" class="peer sr-only" />
+                            <div class="text-center py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 font-bold text-slate-500 dark:text-slate-400 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10 peer-checked:text-cyan-600 dark:peer-checked:text-cyan-400 transition-all hover:border-cyan-300 dark:hover:border-cyan-700">L</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="productoTalla" value="XL" class="peer sr-only" />
+                            <div class="text-center py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 font-bold text-slate-500 dark:text-slate-400 peer-checked:border-cyan-500 peer-checked:bg-cyan-500/10 peer-checked:text-cyan-600 dark:peer-checked:text-cyan-400 transition-all hover:border-cyan-300 dark:hover:border-cyan-700">XL</div>
+                        </label>
+                    </div>
                 </div>
+                ` : ''}
 
-                <!-- Botón de Compra -->
+                <!-- Botones de Acción -->
                 <div class="flex flex-col gap-3 mt-auto">
-                    <button 
-                        id="btnAgregar"
-                        class="w-full py-4 rounded-xl font-black text-lg shadow-lg flex items-center justify-center gap-2 transition-all ${btnClass}" 
-                        ${outOfStock ? 'disabled' : ''}
-                        onclick="agregarAlCarritoLocal(${p.id_producto})"
-                    >
-                        <span class="material-symbols-outlined">shopping_cart</span>
-                        ${btnText}
+                    ${!isAdmin ? `
+                    <button class="w-full bg-gradient-to-r ${outOfStock ? 'from-slate-400 to-slate-500 cursor-not-allowed' : 'from-amber-400 to-orange-600 hover:from-orange-500 hover:to-red-600 dark:from-cyan-500 dark:to-blue-600 dark:hover:from-cyan-400 dark:hover:to-blue-500 hover:scale-[1.02]'} text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all flex justify-center items-center gap-2" 
+                        ${outOfStock ? 'disabled' : `onclick="agregarConTallaDesdeModal(${p.id_producto})"`}>
+                        <span class="material-symbols-outlined text-xl">${outOfStock ? 'block' : 'shopping_cart'}</span> 
+                        ${outOfStock ? 'Agotado' : 'Añadir al Carrito'}
                     </button>
-                    <div class="flex items-center gap-4 text-xs text-slate-500 justify-center mt-2 font-medium">
+                    ` : ''}
+                    <div class="flex flex-col sm:flex-row items-center gap-4 text-xs text-slate-500 justify-center mt-2 font-medium">
                         <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[1rem]">verified</span> Compra Segura WearStore</div>
                         <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[1rem]">local_shipping</span> Envío Gratis a nivel nacional</div>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -210,12 +239,27 @@ function mostrarError(mensajeDebug = "El producto que buscas no existe o ha sido
 }
 
 /**
- * Agrega el producto al carrito de compras desde esta vista.
+ * Agrega el producto al carrito de compras desde esta vista considerando la Talla.
  */
-function agregarAlCarritoLocal(idProducto) {
+function agregarConTallaDesdeModal(idProducto) {
     if (!currentProduct || currentProduct.stock <= 0) return;
 
-    const itemCarrito = carritoLocal.find(item => item.id_producto === idProducto);
+    // Detectar si el producto requiere talla (ropas = tipo 2)
+    let tallaSeleccionada = 'N/A';
+    if (currentProduct.id_tipo_producto === 2) {
+        const radioTalla = document.querySelector('input[name="productoTalla"]:checked');
+        if (radioTalla) {
+            tallaSeleccionada = radioTalla.value;
+        } else {
+            alert('Por favor selecciona una talla.');
+            return;
+        }
+    }
+
+    // El identificador en el carrito ahora incluye la talla para no mezclar S con L
+    const cartId = `${idProducto}_${tallaSeleccionada}`;
+
+    const itemCarrito = carritoLocal.find(item => item.cart_id === cartId);
 
     if (itemCarrito) {
         if (itemCarrito.cantidad < currentProduct.stock) {
@@ -226,18 +270,34 @@ function agregarAlCarritoLocal(idProducto) {
         }
     } else {
         carritoLocal.push({
+            cart_id: cartId,
             id_producto: currentProduct.id_producto,
             nombre: currentProduct.nombre,
             precio: Number(currentProduct.precio),
             imagen_url: currentProduct.imagen_url,
             cantidad: 1,
-            stock: currentProduct.stock
+            stock: currentProduct.stock,
+            talla: tallaSeleccionada
         });
     }
 
     localStorage.setItem(getCartKey(), JSON.stringify(carritoLocal));
-    actualizarContadorCarrito();
-    mostrarToast('¡Listo! Agregado a tu carrito.');
+    actualizarContadorCarrito(); // Changed to actualizarContadorCarrito
+
+    if (window.pixelConfirm) {
+        pixelConfirm(`Se añadió "${currentProduct.nombre}" ${tallaSeleccionada !== 'N/A' ? `(Talla: ${tallaSeleccionada})` : ''} al carrito.`, {
+            titulo: '¡Carrito Actualizado!',
+            btnConfirm: 'Seguir Viendo',
+            btnCancel: 'Ir al Carrito',
+            tipo: 'info'
+        }).then(res => {
+            if (!res) {
+                window.location.href = 'carrito.html';
+            }
+        });
+    } else {
+        alert('Producto agregado al carrito exitosamente.');
+    }
 }
 
 function actualizarContadorCarrito() {
@@ -270,9 +330,19 @@ async function guardarEdicion(id_producto) {
     try {
         const nombre = document.getElementById('editNombre').value;
         const descripcion = document.getElementById('editDesc').value;
-        const precio = Number(document.getElementById('editPrecio').value);
+        let precio = Number(document.getElementById('editPrecio').value);
         const stock = Number(document.getElementById('editStock').value);
         const fileInput = document.getElementById('editImagen');
+
+        // El admin está viendo el precio en la moneda local (ej. COP).
+        // Necesitamos guardarlo en l BD como USD base con alta precisión
+        // para que al volver a multiplicar no se pierdan pesos por redondeo.
+        if (window.CurrencyManager) {
+            const currentCurrency = window.CurrencyManager.getCurrentCurrency();
+            const rate = window.CurrencyManager.rates[currentCurrency];
+            // Convertimos de vuelta a USD sin cortar decimales (para evitar pérdida de precisión)
+            precio = precio / rate;
+        }
 
         const updates = { nombre, descripcion, precio, stock };
 
@@ -297,19 +367,19 @@ async function guardarEdicion(id_producto) {
 async function borrarProductoActual(id_producto) {
     if (!window.novaAuth || !window.novaAuth.isAdmin()) return;
 
-    const confirmado = await pixelConfirm('¿Estás totalmente seguro de RETIRAR este producto de WearStore? Esta acción es instantánea y no puede deshacerse.', { titulo: '🛑 Eliminar Producto', btnConfirm: 'Sí, Eliminar', tipo: 'danger' });
+    const confirmado = await pixelConfirm('¿Estás seguro de ELIMINAR este producto del catálogo? Se borrará de la sección de productos permanentemente. Los pedidos/ventas realizados NO se verán afectados.', { titulo: '🛑 Eliminar Producto', btnConfirm: 'Sí, Eliminar', tipo: 'danger' });
     if (!confirmado) return;
 
     const btn = document.querySelector(`button[onclick="borrarProductoActual(${id_producto})"]`);
-    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">delete</span> Destruyendo...';
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">delete</span> Eliminando...';
     btn.disabled = true;
 
     try {
         await eliminarProducto(id_producto);
-        alert('El producto ha sido eliminado de la base de datos satisfactoriamente.');
-        window.location.href = 'index.html'; // Devolver a vitrina
+        await pixelConfirm('El producto ha sido eliminado del catálogo de WearStore. Tus ventas y pedidos registrados permanecen intactos. 🎉', { titulo: '✅ Producto Eliminado', btnConfirm: 'Aceptar', btnCancel: 'Ir a Inicio', tipo: 'info' });
+        window.location.href = 'index.html';
     } catch (e) {
-        alert('Error intentando purgar de DB: ' + e.message);
+        alert('Error al eliminar el producto: ' + e.message);
         btn.disabled = false;
         btn.innerHTML = '<span class="material-symbols-outlined font-bold group-hover:animate-bounce">delete</span> Eliminar Ítem';
     }

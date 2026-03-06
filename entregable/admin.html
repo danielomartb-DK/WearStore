@@ -1,0 +1,371 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>WearStore | Panel de Administración</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff9900",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#231b0f",
+                        "brand-blue": "#131921",
+                    },
+                    fontFamily: { "display": ["Inter", "sans-serif"], "mecha": ["Rajdhani", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #ff9900;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #231b0f;
+            color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+    <!-- Script de Persistencia de Tema Oscuro/Claro (Debe ir antes de cerrar head) -->
+    <script src="js/theme.js"></script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-slate-900 text-slate-900 dark:text-gray-100 font-display min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- Barra de NavegaciÃ³n -->
+    <header
+        class="fixed top-0 left-0 right-0 z-50 bg-brand-blue text-white shadow-md h-16 flex items-center px-4 md:px-10">
+        <div class="max-w-[1440px] w-full mx-auto flex items-center justify-between gap-4">
+            <a href="index.html" class="flex items-center gap-2 shrink-0 group">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-600 dark:from-cyan-400 dark:to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(255,153,0,0.4)] dark:shadow-[0_0_15px_rgba(0,183,255,0.4)] transition-transform duration-300 group-hover:scale-110">
+                    <span class="material-symbols-outlined text-white text-2xl"
+                        style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
+                </div>
+                <div class="flex flex-col justify-center translate-y-[2px]">
+                    <span class="text-lg font-black tracking-widest text-white leading-none">WEAR<span
+                            class="text-orange-400 dark:text-cyan-400 transition-colors duration-500">STORE</span></span>
+                    <span class="text-[0.55rem] font-bold text-primary ml-1 uppercase tracking-widest mt-1">Admin</span>
+                </div>
+            </a>
+            <!-- Controles de Usuario y Tema -->
+            <div class="flex items-center gap-4 shrink-0">
+                <a href="index.html" class="text-sm font-bold hover:underline flex items-center gap-1 text-primary">
+                    <span class="material-symbols-outlined">storefront</span> Volver a la Tienda
+                </a>
+
+                <!-- Theme Anime Avatar Button (Big Slider) -->
+                <button onclick="toggleTheme()"
+                    class="relative w-20 h-8 md:w-24 md:h-10 bg-gradient-to-r from-orange-400 via-red-500 to-red-600 dark:bg-none dark:bg-slate-800 rounded-full shadow-inner border border-slate-400 dark:border-slate-600 transition-colors duration-300 mx-2 flex items-center group shrink-0"
+                    title="Cambiar Tema (Anime)">
+
+                    <!-- Contenedor estricto para recortar partículas del fondo -->
+                    <div class="absolute inset-0 rounded-full overflow-hidden pointer-events-none z-0">
+                        <canvas class="themeAnimeCanvas absolute inset-0 w-full h-full"></canvas>
+                    </div>
+                    <span
+                        class="theme-icon-toggle absolute -left-2 top-1/2 -translate-y-1/2 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform dark:translate-x-10 md:dark:translate-x-12 z-10 w-14 h-14 md:w-16 md:h-16 flex items-center justify-center"></span>
+                </button>
+
+                <!-- Cuenta -->
+                <div class="auth-container-ui hidden lg:flex">
+                    <!-- Se llena por auth.js -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-24 pb-12 flex-1 relative">
+        <div class="max-w-[1440px] w-full mx-auto px-4">
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+
+                <!-- Columna Izquierda: Formulario de Inventario -->
+                <div class="xl:col-span-5 flex flex-col h-full">
+                    <div
+                        class="relative bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:shadow-none p-8 transition-colors duration-300 overflow-hidden flex-1">
+                        <!-- Barra de acento superior -->
+                        <div
+                            class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-400 via-primary to-orange-500">
+                        </div>
+
+                        <h2 class="text-3xl font-black mb-2 flex items-center gap-3 mt-1">
+                            <span class="material-symbols-outlined text-primary text-4xl">inventory_2</span>
+                            Agregar Nuevo Producto
+                        </h2>
+                        <p
+                            class="text-slate-500 dark:text-slate-400 mb-8 pb-6 border-b border-slate-100 dark:border-slate-700 transition-colors duration-300">
+                            Carga un nuevo artículo al catálogo de
+                            WearStore. Las imágenes se subirán automáticamente a Supabase Storage.</p>
+
+                        <form id="adminProductForm" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Nombre del Producto -->
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2 transition-colors">Nombre
+                                        del Producto</label>
+                                    <input type="text" id="prodNombre" required
+                                        class="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                        placeholder="Ej. Laptop Gaming Asus ROG Strix" />
+                                </div>
+
+                                <!-- Precio -->
+                                <div>
+                                    <label
+                                        class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2 transition-colors">Precio
+                                        ($)</label>
+                                    <input type="number" step="0.01" min="0" id="prodPrecio" required
+                                        class="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                        placeholder="0.00" />
+                                </div>
+
+                                <!-- Stock -->
+                                <div>
+                                    <label
+                                        class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2 transition-colors">Stock
+                                        Inicial (Unidades)</label>
+                                    <input type="number" min="0" id="prodStock" required
+                                        class="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                        placeholder="10" />
+                                </div>
+
+                                <!-- Descripción -->
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2 transition-colors">Descripción
+                                        General
+                                        (Opcional)</label>
+                                    <textarea id="prodDesc" rows="3"
+                                        class="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                        placeholder="Añade detalles del producto..."></textarea>
+                                </div>
+
+                                <!-- Imagen -->
+                                <div class="md:col-span-2">
+                                    <label
+                                        class="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2 transition-colors">Fotografía
+                                        del Producto</label>
+                                    <div class="flex items-center justify-center w-full">
+                                        <label for="prodImagen"
+                                            class="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
+                                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <span
+                                                    class="material-symbols-outlined text-5xl text-slate-400 mb-3 block">cloud_upload</span>
+                                                <p class="mb-2 text-sm text-slate-500"><span class="font-bold">Haz clic
+                                                        para
+                                                        subir</span> o arrastra y suelta</p>
+                                                <p class="text-xs text-slate-400">PNG, JPG o WEBP (MAX. 5MB)</p>
+                                                <p id="fileNameDisplay"
+                                                    class="mt-3 text-sm font-bold text-primary text-center px-4 truncate w-full max-w-xs">
+                                                </p>
+                                            </div>
+                                            <input id="prodImagen" type="file" class="hidden"
+                                                accept="image/png, image/jpeg, image/webp" required />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mensaje de Error Carga -->
+                            <div id="adminErrorMsg"
+                                class="hidden bg-red-50 text-red-600 p-4 rounded-lg border border-red-200 text-sm font-medium flex items-center gap-2">
+                                <span class="material-symbols-outlined">error</span>
+                                <span id="adminErrorText">Error al subir el producto.</span>
+                            </div>
+
+                            <button type="submit" id="btnSubmitProducto"
+                                class="w-full bg-gradient-to-r from-amber-400 to-orange-600 dark:from-cyan-500 dark:to-blue-600 text-white font-bold py-4 rounded-xl text-lg hover:brightness-110 shadow-lg shadow-orange-500/30 dark:shadow-cyan-500/30 transition-all flex justify-center items-center gap-3">
+                                <span class="material-symbols-outlined">add_circle</span>
+                                Guardar Producto en el Catálogo
+                            </button>
+                        </form>
+                    </div>
+                </div> <!-- Cierre columna izquierda -->
+
+                <!-- Columna Derecha: Tabla de Gestión de Pedidos -->
+                <div class="xl:col-span-7 flex flex-col h-full">
+                    <div
+                        class="relative bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:shadow-none transition-colors duration-300 overflow-hidden flex-1 flex flex-col min-h-[600px]">
+                        <!-- Barra de acento superior (Cian para diferenciar del naranja de compras) -->
+                        <div
+                            class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-400 via-cyan-500 to-teal-400">
+                        </div>
+
+                        <div class="p-8 pb-4 border-b border-slate-200 dark:border-slate-700">
+                            <h2
+                                class="text-3xl font-black mb-2 flex items-center gap-3 mt-1 text-slate-900 dark:text-white">
+                                <span class="material-symbols-outlined text-cyan-500 text-4xl">local_shipping</span>
+                                Gestión de Pedidos
+                            </h2>
+                            <p class="text-slate-500 dark:text-slate-400">Administra y despacha las compras realizadas
+                                en la tienda.</p>
+
+                            <!-- Pestañas de Filtrado (Tabs) -->
+                            <div class="flex gap-4 mt-6">
+                                <button id="tabPendientes"
+                                    class="px-6 py-2 rounded-lg font-bold transition-all bg-brand-blue dark:bg-primary text-white dark:text-brand-blue shadow-md border border-transparent">
+                                    Pendientes <span id="badgePendientes"
+                                        class="ml-2 bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+                                </button>
+                                <button id="tabEntregados"
+                                    class="px-6 py-2 rounded-lg font-bold transition-all bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600">
+                                    Enviados
+                                </button>
+                                <button id="tabCancelados"
+                                    class="px-6 py-2 rounded-lg font-bold transition-all bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600">
+                                    Cancelados <span id="badgeCancelados"
+                                        class="ml-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabla HTML -->
+                        <div
+                            class="flex-1 overflow-y-auto overflow-x-auto p-0 max-h-[500px] border-b border-slate-100 dark:border-slate-800">
+                            <table class="w-full text-left border-collapse min-w-[700px]">
+                                <thead
+                                    class="sticky top-0 z-10 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-sm shadow-sm">
+                                    <tr
+                                        class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wider">
+                                        <th class="p-4 font-bold border-b border-slate-200 dark:border-slate-700 w-24">
+                                            ID</th>
+                                        <th class="p-4 font-bold border-b border-slate-200 dark:border-slate-700">
+                                            Cliente</th>
+                                        <th class="p-4 font-bold border-b border-slate-200 dark:border-slate-700 w-48">
+                                            Contacto</th>
+                                        <th class="p-4 font-bold border-b border-slate-200 dark:border-slate-700 w-32">
+                                            Total</th>
+                                        <th
+                                            class="p-4 font-bold border-b border-slate-200 dark:border-slate-700 w-32 text-center">
+                                            Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaPedidosBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    <!-- Filas de la tabla pobladas dinámicamente por admin.js -->
+                                    <tr>
+                                        <td colspan="5" class="p-8 text-center text-slate-500 dark:text-slate-400">
+                                            <div class="flex flex-col items-center justify-center gap-3">
+                                                <span class="spinner" style="border-left-color: #06b6d4;"></span>
+                                                Cargando registro de órdenes...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div> <!-- Cierre columna derecha -->
+
+            </div> <!-- Cierre grid -->
+        </div> <!-- Cierre max-w -->
+    </main>
+
+    <!-- Modal para Detalles del Pedido -->
+    <dialog id="modalDetallePedido"
+        class="w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-0 backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm transition-all text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 m-auto overflow-hidden">
+
+        <!-- Header del Modal -->
+        <div
+            class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+            <h3 class="text-xl font-black flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">receipt_long</span>
+                Detalle del Pedido <span id="modalOrderId"
+                    class="text-slate-400 dark:text-slate-500 font-medium">#---</span>
+            </h3>
+            <button id="btnCerrarModal"
+                class="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors flex items-center justify-center">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Body del Modal: Listado de Ítems Comprados -->
+        <div class="p-6">
+            <div class="overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                <div id="modalItemsContainer" class="flex flex-col gap-4">
+                    <!-- Contenido dinámico (SPINNER base) -->
+                    <div class="flex flex-col items-center justify-center p-8 gap-3 text-slate-500">
+                        <span class="spinner" style="border-left-color: #ff9900;"></span>
+                        <span>Recuperando recibo desde la bóveda...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen Total -->
+            <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/50 flex justify-between items-center">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Total Pagado:</span>
+                <span id="modalTotalVenta" class="text-2xl font-black text-slate-900 dark:text-white">$0.00</span>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Notificación Toast -->
+    <div id="toast" class="toast">
+        <span class="material-symbols-outlined" style="color: #4caf50;">check_circle</span>
+        <span id="toastMessage">¡Producto creado con éxito!</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js?v=9"></script>
+    <script src="js/auth.js?v=10"></script>
+    <script src="js/pixelconfirm.js?v=1"></script>
+    <script src="js/admin.js?v=11"></script>
+    <script src="js/magnetic.js"></script>
+</body>
+
+</html>

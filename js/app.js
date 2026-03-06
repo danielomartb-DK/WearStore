@@ -36,7 +36,7 @@ const refs = {
  * Inicializa la aplicaciÃ³n
  */
 async function initApp() {
-    // Cargar el carrito segÃºn el usuario
+    // Cargar el carrito según el usuario
     state.carrito = JSON.parse(localStorage.getItem(getCartKey())) || [];
 
     actualizarContadorCarrito();
@@ -44,7 +44,9 @@ async function initApp() {
     try {
         mostrarLoader(true);
         console.log('Cargando productos desde Supabase...');
-        state.productos = await obtenerProductos();
+        const isAdmin = window.novaAuth && window.novaAuth.isAdmin();
+        // Admin ve TODOS los productos; público solo los activos
+        state.productos = isAdmin ? await obtenerProductos() : await obtenerProductosActivos();
         console.log('Productos recibidos:', state.productos.length);
         renderizarProductos(state.productos);
     } catch (error) {
@@ -104,21 +106,38 @@ function renderizarProductos(productos) {
 
     console.log('Pintando', productos.length, 'tarjetas de producto...');
 
+    const isAdmin = window.novaAuth && window.novaAuth.isAdmin();
+
     refs.grid.innerHTML = productos.map(p => {
         const price = Number(p.precio) || 0;
         const formattedPrice = window.CurrencyManager ? window.CurrencyManager.formatPrice(price) : '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2 });
         const stockQty = Number(p.stock) || 0;
         const isLowStock = stockQty > 0 && stockQty <= 5;
         const outOfStock = stockQty <= 0;
+        const isInactive = p.estado === false;
         const disabledClass = outOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:brightness-110';
+        const inactiveCardClass = isInactive ? 'opacity-40 ring-2 ring-red-500/50' : '';
 
         let stockBadge = '';
-        if (outOfStock) {
+        if (isInactive && isAdmin) {
+            stockBadge = '<span class="absolute top-3 left-3 bg-red-700 text-white text-[10px] font-bold px-2 py-1 rounded uppercase z-10">OCULTO</span>';
+        } else if (outOfStock) {
             stockBadge = '<span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Agotado</span>';
         } else if (isLowStock) {
             stockBadge = '<span class="absolute top-3 left-3 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Solo ' + stockQty + ' disponibles</span>';
         } else if (price > 100) {
             stockBadge = '<span class="absolute top-3 left-3 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Envío Gratis</span>';
+        }
+
+        // Botón de toggle admin (solo visible para administradores)
+        let adminToggleBtn = '';
+        if (isAdmin) {
+            const toggleIcon = isInactive ? 'visibility' : 'visibility_off';
+            const toggleTitle = isInactive ? 'Activar producto (hacerlo visible)' : 'Ocultar producto de la tienda';
+            const toggleColor = isInactive ? 'bg-green-600 hover:bg-green-500' : 'bg-red-600 hover:bg-red-500';
+            adminToggleBtn = '<button onclick="event.stopPropagation(); event.preventDefault(); toggleProductoEstado(' + p.id_producto + ', ' + isInactive + ')" class="absolute top-3 right-3 z-20 ' + toggleColor + ' text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110" title="' + toggleTitle + '">'
+                + '<span class="material-symbols-outlined text-sm">' + toggleIcon + '</span>'
+                + '</button>';
         }
 
         // Imagen: usa la de la BD, o un fallback de Unsplash
@@ -132,7 +151,8 @@ function renderizarProductos(productos) {
         const randomFallback = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
         const imagenUrl = p.imagen_url || randomFallback;
 
-        return '<div data-holo class="holo-card relative bg-white dark:bg-[#0c1222] border border-slate-200/80 dark:border-slate-700/60 rounded-2xl overflow-hidden group flex flex-col transition-colors duration-300">'
+        return '<div data-holo class="holo-card relative bg-white dark:bg-[#0c1222] border border-slate-200/80 dark:border-slate-700/60 rounded-2xl overflow-hidden group flex flex-col transition-colors duration-300 ' + inactiveCardClass + '">'
+            + adminToggleBtn
             + '<a href="producto.html?id=' + p.id_producto + '" class="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 block">'
             + '<img alt="' + p.nombre + '" src="' + imagenUrl + '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />'
             + stockBadge
@@ -151,10 +171,17 @@ function renderizarProductos(productos) {
             + '<div class="flex items-baseline gap-2 mb-3">'
             + '<span class="text-xl md:text-2xl font-mecha font-bold text-slate-900 dark:text-white tracking-wide">' + formattedPrice + '</span>'
             + '</div>'
-            + '<button class="w-full bg-gradient-to-r from-amber-400 to-orange-600 dark:from-cyan-600 dark:to-blue-700 text-white font-bold py-2 md:py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm shadow-[0_4px_15px_rgba(255,153,0,0.3)] dark:shadow-[0_4px_15px_rgba(0,183,255,0.25)] hover:shadow-[0_6px_25px_rgba(255,153,0,0.5)] dark:hover:shadow-[0_6px_25px_rgba(0,183,255,0.4)] hover:-translate-y-0.5 ' + disabledClass + '" onclick="agregarAlCarrito(' + p.id_producto + ')" ' + (outOfStock ? 'disabled' : '') + '>'
-            + '<span class="material-symbols-outlined text-base md:text-xl">shopping_cart</span>'
-            + (outOfStock ? 'Agotado' : 'Agregar')
-            + '</button>'
+            + (p.id_tipo_producto === 2 ?
+                '<a href="producto.html?id=' + p.id_producto + '" class="w-full bg-gradient-to-r from-amber-400 to-orange-600 dark:from-cyan-600 dark:to-blue-700 text-white font-bold py-2 md:py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm shadow-[0_4px_15px_rgba(255,153,0,0.3)] dark:shadow-[0_4px_15px_rgba(0,183,255,0.25)] hover:shadow-[0_6px_25px_rgba(255,153,0,0.5)] dark:hover:shadow-[0_6px_25px_rgba(0,183,255,0.4)] hover:-translate-y-0.5 ' + disabledClass + '" ' + (outOfStock ? 'style="pointer-events: none;"' : '') + '>'
+                + '<span class="material-symbols-outlined text-base md:text-xl">' + (outOfStock ? 'block' : 'shopping_cart') + '</span>'
+                + (outOfStock ? 'Agotado' : 'Agregar')
+                + '</a>'
+                :
+                '<button class="w-full bg-gradient-to-r from-amber-400 to-orange-600 dark:from-cyan-600 dark:to-blue-700 text-white font-bold py-2 md:py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 md:gap-2 text-xs md:text-sm shadow-[0_4px_15px_rgba(255,153,0,0.3)] dark:shadow-[0_4px_15px_rgba(0,183,255,0.25)] hover:shadow-[0_6px_25px_rgba(255,153,0,0.5)] dark:hover:shadow-[0_6px_25px_rgba(0,183,255,0.4)] hover:-translate-y-0.5 ' + disabledClass + '" onclick="agregarAlCarrito(' + p.id_producto + ')" ' + (outOfStock ? 'disabled' : '') + '>'
+                + '<span class="material-symbols-outlined text-base md:text-xl">' + (outOfStock ? 'block' : 'shopping_cart') + '</span>'
+                + (outOfStock ? 'Agotado' : 'Agregar')
+                + '</button>'
+            )
             + '</div>'
             + '</div>'
             + '</div>';
@@ -175,23 +202,27 @@ function agregarAlCarrito(idProducto) {
     const producto = state.productos.find(p => p.id_producto === idProducto);
     if (!producto) return;
 
-    const itemCarrito = state.carrito.find(item => item.id_producto === idProducto);
+    // Para productos genéricos desde el home, la talla es N/A y el ID es simple
+    const cartId = `${producto.id_producto}_N/A`;
+    const itemCarrito = state.carrito.find(item => item.cart_id === cartId || item.id_producto === idProducto && !item.cart_id);
 
     if (itemCarrito) {
         if (itemCarrito.cantidad < producto.stock) {
             itemCarrito.cantidad += 1;
         } else {
-            console.warn('LÃ­mite de stock alcanzado para este producto.');
+            console.warn('Límite de stock alcanzado para este producto.');
             return;
         }
     } else {
         state.carrito.push({
+            cart_id: cartId,
             id_producto: producto.id_producto,
             nombre: producto.nombre,
             precio: Number(producto.precio),
             imagen_url: producto.imagen_url,
             cantidad: 1,
-            stock: producto.stock
+            stock: producto.stock,
+            talla: 'N/A'
         });
     }
 
@@ -236,6 +267,33 @@ function usarDatosDePrueba() {
     ];
     state.productos = mockData;
     renderizarProductos(mockData);
+}
+
+/**
+ * Toggle de visibilidad de producto (Admin)
+ * Cambia estado activo/inactivo y re-renderiza la grilla
+ */
+async function toggleProductoEstado(id_producto, currentlyInactive) {
+    const nuevoEstado = currentlyInactive ? true : false;
+    const accion = nuevoEstado ? 'ACTIVAR' : 'OCULTAR';
+
+    try {
+        await actualizarProducto(id_producto, { estado: nuevoEstado });
+
+        // Actualizar el estado local sin recargar la página
+        const producto = state.productos.find(p => p.id_producto === id_producto);
+        if (producto) {
+            producto.estado = nuevoEstado;
+        }
+
+        // Re-renderizar la grilla
+        renderizarProductos(state.productos);
+
+        // Mostrar feedback
+        mostrarToast(nuevoEstado ? '✅ Producto activado' : '🔴 Producto ocultado');
+    } catch (e) {
+        alert('Error al ' + accion + ' el producto: ' + e.message);
+    }
 }
 
 

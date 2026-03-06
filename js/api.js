@@ -64,6 +64,33 @@ async function obtenerProductos() {
 }
 
 /**
+ * Obtiene solo los productos ACTIVOS (estado=true) para la vista pública
+ * @returns {Promise<Array>} Lista de productos activos
+ */
+async function obtenerProductosActivos() {
+    try {
+        console.log("Obteniendo productos activos de Supabase...");
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/producto?estado=eq.true&select=*`, {
+            method: 'GET',
+            headers: headers
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            console.error('Error cuerpo:', errBody);
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Productos activos devueltos:", data.length);
+        return data;
+    } catch (error) {
+        console.error('API Error (obtenerProductosActivos):', error);
+        throw error;
+    }
+}
+
+/**
  * Obtiene un producto específico por su ID
  * @param {number|string} id - ID del producto
  * @returns {Promise<Object>} Datos del producto
@@ -110,7 +137,7 @@ async function registrarCliente(datosCliente) {
                 const patchResp = await fetch(`${SUPABASE_URL}/rest/v1/cliente?id_cliente=eq.${oldClient.id_cliente}`, {
                     method: 'PATCH',
                     headers: {
-                        ...headers,
+                        ...getDynamicHeaders(),
                         'Prefer': 'return=representation'
                     },
                     body: JSON.stringify({
@@ -134,7 +161,7 @@ async function registrarCliente(datosCliente) {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/cliente`, {
             method: 'POST',
             headers: {
-                ...headers,
+                ...getDynamicHeaders(),
                 'Prefer': 'return=representation'
             },
             body: JSON.stringify(datosCliente)
@@ -207,7 +234,7 @@ async function registrarVenta(datosVenta) {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/venta`, {
             method: 'POST',
             headers: {
-                ...headers,
+                ...getDynamicHeaders(),
                 'Prefer': 'return=representation'
             },
             body: JSON.stringify(datosVenta)
@@ -233,13 +260,16 @@ async function registrarDetallesVenta(detallesVenta) {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/detalle_venta`, {
             method: 'POST',
             headers: {
-                ...headers,
+                ...getDynamicHeaders(),
                 'Prefer': 'return=representation'
             },
             body: JSON.stringify(detallesVenta)
         });
 
-        if (!response.ok) throw new Error('Error al registrar el detalle de la venta');
+        if (!response.ok) {
+            const errBody = await response.text();
+            throw new Error(`Error al registrar el detalle de la venta: ${errBody}`);
+        }
 
         return await response.json();
     } catch (error) {
@@ -345,11 +375,28 @@ async function actualizarProducto(id_producto, datos) {
 }
 
 /**
- * Elimina un producto de la base de datos
+ * Elimina un producto de la tabla producto.
+ * Primero limpia las referencias en detalle_venta (líneas de pedido),
+ * luego elimina el producto. Las ventas (tabla venta) NO se tocan.
  * @param {number|string} id_producto - ID del producto a eliminar
  */
 async function eliminarProducto(id_producto) {
     try {
+        // Paso 1: Eliminar las líneas de detalle_venta que referencian este producto
+        // (esto NO borra las ventas/pedidos, solo las líneas de ítem)
+        const deleteDetalles = await fetch(`${SUPABASE_URL}/rest/v1/detalle_venta?id_producto=eq.${id_producto}`, {
+            method: 'DELETE',
+            headers: {
+                ...getDynamicHeaders()
+            }
+        });
+
+        // No lanzamos error si falla — puede que no haya detalles asociados
+        if (!deleteDetalles.ok) {
+            console.warn('Info: No se encontraron detalles de venta para limpiar (o error menor).');
+        }
+
+        // Paso 2: Ahora sí eliminar el producto de la tabla producto
         const response = await fetch(`${SUPABASE_URL}/rest/v1/producto?id_producto=eq.${id_producto}`, {
             method: 'DELETE',
             headers: {
@@ -440,6 +487,59 @@ async function obtenerDetallesVenta(id_venta) {
         return await response.json();
     } catch (error) {
         console.error('API Error (obtenerDetallesVenta):', error);
+        throw error;
+    }
+}
+
+/**
+ * Obtiene el perfil del cliente desde la base de datos usando su email.
+ * @param {string} email - Correo del usuario autenticado
+ * @returns {Promise<Object|null>} Datos del cliente o null si no existe
+ */
+async function obtenerPerfilCliente(email) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/cliente?email=eq.${encodeURIComponent(email)}&select=*`, {
+            method: 'GET',
+            headers: getDynamicHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al obtener perfil');
+        }
+
+        const data = await response.json();
+        return data.length > 0 ? data[0] : null;
+    } catch (error) {
+        console.error('API Error (obtenerPerfilCliente):', error);
+        return null;
+    }
+}
+
+/**
+ * Crea o actualiza el perfil del cliente (UPSERT basado en email)
+ * @param {Object} datosCliente - Objeto con nombres, apellidos, telefono, direccion, documento, email
+ */
+async function upsertPerfilCliente(datosCliente) {
+    try {
+        // En supabase rest v1, el UPSERT se hace con POST o PUT más resolución de conflicto
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/cliente?on_conflict=email`, {
+            method: 'POST',
+            headers: {
+                ...getDynamicHeaders(),
+                'Prefer': 'resolution=merge-duplicates,return=representation'
+            },
+            body: JSON.stringify(datosCliente)
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            throw new Error(`[DATABASE] Error guardando perfil: ${errBody}`);
+        }
+
+        const data = await response.json();
+        return data.length > 0 ? data[0] : null;
+    } catch (error) {
+        console.error('API Error (upsertPerfilCliente):', error);
         throw error;
     }
 }

@@ -203,6 +203,16 @@ class AuthManager {
 
         // Actualizar visualmente la barra al cargar
         this.updateUI();
+
+        // Intentar obtener el nombre real desde la base de datos para la barra de navegación
+        if (this.user && this.user.user && typeof window.obtenerPerfilCliente === 'function') {
+            window.obtenerPerfilCliente(this.user.user.email).then(perfil => {
+                if (perfil && perfil.nombres) {
+                    this.userProfileName = perfil.nombres.split(' ')[0]; // Mostrar solo el primer nombre
+                    this.updateUI();
+                }
+            }).catch(e => console.warn('Aviso: Cargando perfil para navbar', e));
+        }
     }
 
     /**
@@ -215,17 +225,19 @@ class AuthManager {
             if (this.user && this.user.user) {
                 // Usuario Logeado
                 let userName = 'Account';
-                if (this.user.user.user_metadata && this.user.user.user_metadata.name) {
-                    userName = this.user.user.user_metadata.name;
+                if (this.userProfileName) {
+                    userName = this.userProfileName;
+                } else if (this.user.user.user_metadata && this.user.user.user_metadata.name) {
+                    userName = this.user.user.user_metadata.name.split(' ')[0];
                 } else if (this.user.user.email) {
                     userName = this.user.user.email.split('@')[0];
                 }
 
                 container.innerHTML = `
                     <div class="relative cursor-pointer group flex flex-col items-start leading-tight">
-                        <span class="text-xs text-slate-300">Hola, ${userName}</span>
+                        <span class="text-xs text-slate-300">Bienvenido de nuevo</span>
                         <div class="flex items-center gap-1">
-                            <span class="text-sm font-bold">Mi Cuenta</span>
+                            <span class="text-sm font-bold">${userName}</span>
                             <span class="material-symbols-outlined text-[1rem]">arrow_drop_down</span>
                         </div>
                         
@@ -235,6 +247,7 @@ class AuthManager {
                                 <p class="font-bold text-sm truncate">${this.user.user.email}</p>
                             </div>
                             <ul class="py-2 text-sm z-50 relative">
+                                <li><a href="perfil.html" class="block px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800">Mis Datos Perfil</a></li>
                                 <li><a href="#" class="block px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800">Tus Pedidos</a></li>
                                 ${this.isAdmin() ? '<li><a href="admin.html" class="block px-4 py-2 text-primary font-bold hover:bg-slate-100 dark:hover:bg-slate-800">Panel Admin</a></li>' : ''}
                                 <li><button id="btnLogout" type="button" class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 cursor-pointer">Cerrar Sesión</button></li>
@@ -245,9 +258,9 @@ class AuthManager {
             } else {
                 // No Logeado
                 container.innerHTML = `
-                    <a href="index.html" class="flex flex-col items-start leading-tight cursor-pointer hover:underline cursor-not-allowed">
-                        <span class="text-xs text-slate-300">Hola, ${userName}</span>
-                        <span class="text-sm font-bold">Mi Cuenta</span>
+                    <a href="login.html" class="flex flex-col items-start leading-tight cursor-pointer hover:underline">
+                        <span class="text-xs text-slate-300">Hola, Invitado</span>
+                        <span class="text-sm font-bold">Iniciar Sesión</span>
                     </a>
                 `;
             }

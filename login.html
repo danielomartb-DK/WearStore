@@ -77,7 +77,7 @@
                 <div
                     class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-600 dark:from-cyan-400 dark:to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(255,153,0,0.4)] dark:shadow-[0_0_15px_rgba(0,183,255,0.4)] transition-transform duration-300 group-hover:scale-110">
                     <span class="material-symbols-outlined text-white text-3xl"
-                        style="font-variation-settings: 'FILL' 1;">diamond</span>
+                        style="font-variation-settings: 'FILL' 1;">shopping_bag</span>
                 </div>
                 <span
                     class="text-xl font-black tracking-widest text-slate-800 dark:text-white leading-none mt-2">WEAR<span
@@ -125,15 +125,21 @@
                         placeholder="email@example.com">
                 </div>
 
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2 relative">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-bold">Contraseña</label>
                         <a href="#" class="text-xs text-primary font-bold hover:underline" id="forgotPwdLink">¿Olvidaste
                             tu contraseña?</a>
                     </div>
-                    <input type="password" id="password" required
-                        class="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-primary p-3"
-                        placeholder="••••••••">
+                    <div class="relative w-full">
+                        <input type="password" id="password" required
+                            class="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-primary p-3 pr-10"
+                            placeholder="••••••••">
+                        <button type="button" id="btnTogglePwd"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                            <span class="material-symbols-outlined text-xl" id="pwdIcon">visibility_off</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Error Box -->
@@ -186,8 +192,22 @@
             const formSubtitle = document.getElementById('formSubtitle');
             const toggleText = document.getElementById('toggleText');
             const forgotPwdLink = document.getElementById('forgotPwdLink');
+            const passwordInput = document.getElementById('password');
+            const btnTogglePwd = document.getElementById('btnTogglePwd');
+            const pwdIcon = document.getElementById('pwdIcon');
 
             let isLoginMode = true;
+
+            // Toggle Password Visibility
+            btnTogglePwd.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    pwdIcon.textContent = 'visibility';
+                } else {
+                    passwordInput.type = 'password';
+                    pwdIcon.textContent = 'visibility_off';
+                }
+            });
 
             // Redireccionar si ya está logeado
             if (window.novaAuth && window.novaAuth.user && window.novaAuth.user.user) {
@@ -255,6 +275,3 @@
 </body>
 
 </html>
-
-
-

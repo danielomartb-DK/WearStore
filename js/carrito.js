@@ -36,7 +36,7 @@ const cartRefs = {
 /**
  * Inicializa el Módulo del Carrito
  */
-function initCarrito() {
+async function initCarrito() {
     // Cargar items del storage correspondiente al usuario actual
     cart.items = JSON.parse(localStorage.getItem(getCartKey())) || [];
 
@@ -52,14 +52,34 @@ function initCarrito() {
             emailInput.readOnly = true;
             emailInput.classList.add('opacity-70', 'cursor-not-allowed', 'bg-slate-100');
         }
-        if (currentUser.user_metadata && currentUser.user_metadata.name) {
-            const parts = currentUser.user_metadata.name.split(' ');
-            const nombresInput = document.querySelector('input[name="nombres"]');
-            const apellidosInput = document.querySelector('input[name="apellidos"]');
-            if (nombresInput && !nombresInput.value) nombresInput.value = parts[0];
-            if (apellidosInput && parts.length > 1 && !apellidosInput.value) {
-                apellidosInput.value = parts.slice(1).join(' ');
+
+        // Recuperar el perfil detallado de Supabase
+        try {
+            const perfil = await obtenerPerfilCliente(currentUser.email);
+            if (perfil) {
+                const nombresInput = document.querySelector('input[name="nombres"]');
+                const apellidosInput = document.querySelector('input[name="apellidos"]');
+                const telefonoInput = document.querySelector('input[name="telefono"]');
+                const documentoInput = document.querySelector('input[name="documento"]');
+                const direccionInput = document.querySelector('textarea[name="direccion"]');
+
+                if (nombresInput && !nombresInput.value) nombresInput.value = perfil.nombres || '';
+                if (apellidosInput && !apellidosInput.value) apellidosInput.value = perfil.apellidos || '';
+                if (telefonoInput && !telefonoInput.value) telefonoInput.value = perfil.telefono || '';
+                if (documentoInput && !documentoInput.value) documentoInput.value = perfil.documento || '';
+                if (direccionInput && !direccionInput.value) direccionInput.value = perfil.direccion || '';
+            } else if (currentUser.user_metadata && currentUser.user_metadata.name) {
+                // Fallback a los datos de sesión si no hay perfil en BD
+                const parts = currentUser.user_metadata.name.split(' ');
+                const nombresInput = document.querySelector('input[name="nombres"]');
+                const apellidosInput = document.querySelector('input[name="apellidos"]');
+                if (nombresInput && !nombresInput.value) nombresInput.value = parts[0];
+                if (apellidosInput && parts.length > 1 && !apellidosInput.value) {
+                    apellidosInput.value = parts.slice(1).join(' ');
+                }
             }
+        } catch (e) {
+            console.error("Error al cargar el perfil para autocompletar:", e);
         }
     }
 
@@ -92,16 +112,17 @@ function renderizarItems() {
             + '<img src="' + imgUrl + '" alt="' + item.nombre + '" class="w-20 h-20 object-cover rounded-lg flex-shrink-0" />'
             + '<div class="flex-1 min-w-0">'
             + '<h4 class="font-medium text-sm text-slate-900 dark:text-white truncate transition-colors duration-300">' + item.nombre + '</h4>'
+            + (item.talla && item.talla !== 'N/A' ? '<span class="inline-block mt-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-md">Talla: ' + item.talla + '</span>' : '')
             + '<p class="text-xs text-slate-500 mt-1">Precio unit.: ' + unitPrice + '</p>'
             + '<div class="flex items-center gap-2 mt-2">'
-            + '<button onclick="cambiarCantidad(' + item.id_producto + ', -1)" class="w-7 h-7 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center text-lg font-bold text-slate-600 dark:text-slate-300 transition-colors duration-300">−</button>'
+            + '<button onclick="cambiarCantidad(\'' + (item.cart_id || item.id_producto) + '\', -1)" class="w-7 h-7 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center text-lg font-bold text-slate-600 dark:text-slate-300 transition-colors duration-300">−</button>'
             + '<span class="text-sm font-bold w-6 text-center dark:text-white transition-colors duration-300">' + item.cantidad + '</span>'
-            + '<button onclick="cambiarCantidad(' + item.id_producto + ', 1)" class="w-7 h-7 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center text-lg font-bold text-slate-600 dark:text-slate-300 transition-colors duration-300">+</button>'
+            + '<button onclick="cambiarCantidad(\'' + (item.cart_id || item.id_producto) + '\', 1)" class="w-7 h-7 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center text-lg font-bold text-slate-600 dark:text-slate-300 transition-colors duration-300">+</button>'
             + '</div>'
             + '</div>'
             + '<div class="text-right flex-shrink-0">'
             + '<p class="font-bold text-lg text-slate-900 dark:text-white drop-shadow-sm transition-colors duration-300">' + itemTotal + '</p>'
-            + '<button onclick="eliminarItem(' + item.id_producto + ')" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs mt-2 flex items-center gap-1 ml-auto transition-colors duration-300">'
+            + '<button onclick="eliminarItem(\'' + (item.cart_id || item.id_producto) + '\')" class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs mt-2 flex items-center gap-1 ml-auto transition-colors duration-300">'
             + '<span class="material-symbols-outlined text-sm">delete</span> Quitar'
             + '</button>'
             + '</div>'
@@ -112,13 +133,14 @@ function renderizarItems() {
 /**
  * Cambia la cantidad de un item
  */
-function cambiarCantidad(idProducto, delta) {
-    const item = cart.items.find(i => i.id_producto === idProducto);
+function cambiarCantidad(cartId, delta) {
+    // Soporte retroactivo para IDs antiguos numéricos
+    const item = cart.items.find(i => (i.cart_id === cartId) || (i.id_producto == cartId));
     if (!item) return;
 
     item.cantidad += delta;
     if (item.cantidad <= 0) {
-        cart.items = cart.items.filter(i => i.id_producto !== idProducto);
+        cart.items = cart.items.filter(i => (i.cart_id || i.id_producto) !== cartId);
     } else if (item.cantidad > item.stock) {
         item.cantidad = item.stock;
     }
@@ -131,8 +153,8 @@ function cambiarCantidad(idProducto, delta) {
 /**
  * Elimina un item del carrito
  */
-function eliminarItem(idProducto) {
-    cart.items = cart.items.filter(i => i.id_producto !== idProducto);
+function eliminarItem(cartId) {
+    cart.items = cart.items.filter(i => (i.cart_id || i.id_producto) !== cartId);
     guardarCarrito();
     renderizarItems();
     calcularTotales();
@@ -201,7 +223,8 @@ async function handleCheckoutSubmit(e) {
                 id_producto: item.id_producto,
                 cantidad: item.cantidad,
                 precio_unitario: item.precio,
-                subtotal: item.precio * item.cantidad
+                subtotal: item.precio * item.cantidad,
+                talla: item.talla || 'N/A'
             }));
             await registrarDetallesVenta(detalles);
 
