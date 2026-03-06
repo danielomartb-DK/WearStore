@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff9900",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#231b0f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mecha": ["Rajdhani", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-left-color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <title>Inicia Sesión - WearStore</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <!-- Script de Persistencia de Tema Oscuro/Claro (Debe ir antes de cerrar head) -->
+    <script src="js/theme.js"></script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-slate-900 font-display text-slate-900 dark:text-gray-100 flex flex-col min-h-screen transition-colors duration-300">
+
+    <!-- Header Minimal -->
+    <header class="w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <!-- Espacio vacío para flex-between simétrico -->
+            <div class="w-10"></div>
+
+            <!-- Identidad de Marca CSS (Logo) -->
+            <a href="index.html" class="flex flex-col items-center justify-center gap-1 group">
+                <div
+                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-600 dark:from-cyan-400 dark:to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(255,153,0,0.4)] dark:shadow-[0_0_15px_rgba(0,183,255,0.4)] transition-transform duration-300 group-hover:scale-110">
+                    <span class="material-symbols-outlined text-white text-3xl"
+                        style="font-variation-settings: 'FILL' 1;">diamond</span>
+                </div>
+                <span
+                    class="text-xl font-black tracking-widest text-slate-800 dark:text-white leading-none mt-2">WEAR<span
+                        class="text-orange-400 dark:text-cyan-400 transition-colors duration-500">WEAR</span></span>
+            </a>
+
+            <!-- Conmutador de tema (Big Slider) -->
+            <button onclick="toggleTheme()"
+                class="relative w-20 h-8 md:w-24 md:h-10 bg-gradient-to-r from-orange-400 via-red-500 to-red-600 dark:bg-none dark:bg-slate-800 rounded-full shadow-inner border border-slate-400 dark:border-slate-600 transition-colors duration-300 mx-2 flex items-center group shrink-0 z-10"
+                title="Cambiar Tema (Anime)">
+
+                <!-- Contenedor estricto para recortar partículas del fondo -->
+                <div class="absolute inset-0 rounded-full overflow-hidden pointer-events-none z-0">
+                    <canvas class="themeAnimeCanvas absolute inset-0 w-full h-full"></canvas>
+                </div>
+                <span
+                    class="theme-icon-toggle absolute -left-2 top-1/2 -translate-y-1/2 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform dark:translate-x-10 md:dark:translate-x-12 z-10 w-14 h-14 md:w-16 md:h-16 flex items-center justify-center"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Form Section -->
+    <main class="flex-grow flex items-center justify-center p-4 py-12">
+        <div
+            class="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg p-8 transform transition-all">
+
+            <h1 class="text-3xl font-black mb-2" id="formTitle">Inicia Sesión</h1>
+            <p class="text-slate-500 mb-8" id="formSubtitle">Bienvenido de nuevo. Ingresa tus credenciales para acceder
+                a tu
+                cuenta.</p>
+
+            <form id="authForm" class="space-y-5">
+                <!-- Name Field (Only used in Register mode) -->
+                <div id="nameFieldGroup" class="hidden flex-col gap-2">
+                    <label class="text-sm font-bold">Nombre Completo</label>
+                    <input type="text" id="regName"
+                        class="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-primary p-3"
+                        placeholder="Juan Pérez">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-bold">Correo Electrónico</label>
+                    <input type="email" id="email" required
+                        class="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-primary p-3"
+                        placeholder="email@example.com">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-sm font-bold">Contraseña</label>
+                        <a href="#" class="text-xs text-primary font-bold hover:underline" id="forgotPwdLink">¿Olvidaste
+                            tu contraseña?</a>
+                    </div>
+                    <input type="password" id="password" required
+                        class="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-primary focus:ring-primary p-3"
+                        placeholder="••••••••">
+                </div>
+
+                <!-- Error Box -->
+                <div id="errorAlert"
+                    class="hidden bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg border border-red-200 dark:border-red-900/50 text-sm font-medium flex gap-2 items-center">
+                    <span class="material-symbols-outlined text-lg">error</span>
+                    <span id="errorMsg">Credenciales inválidas</span>
+                </div>
+
+                <button type="submit" id="btnSubmit"
+                    class="w-full bg-primary hover:bg-orange-500 text-slate-900 hover:-translate-y-0.5 transition-all font-black py-4 rounded-xl shadow-lg shadow-primary/20 flex justify-center items-center gap-2">
+                    Continuar <span class="material-symbols-outlined">login</span>
+                </button>
+            </form>
+
+            <!-- Toggle Register/Login -->
+            <div class="mt-8 text-center border-t border-slate-100 dark:border-slate-800 pt-6">
+                <p class="text-sm text-slate-500">
+                    <span id="toggleText">¿Eres nuevo en WearStore?</span>
+                    <button id="btnToggleMode" class="text-primary font-bold hover:underline ml-1">Crea una
+                        cuenta</button>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Minimal -->
+    <footer class="text-slate-400 text-xs py-8 text-center border-t border-slate-100 dark:border-slate-800">
+        <div class="flex justify-center gap-4 mb-4">
+            <a href="#" class="hover:text-primary">Condiciones de Uso</a>
+            <a href="#" class="hover:text-primary">Aviso de Privacidad</a>
+            <a href="#" class="hover:text-primary">Ayuda</a>
+        </div>
+        <p>© 2026 Daniel Tijaro. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <!-- Cargar supabase variables primero -->
+    <script src="js/api.js?v=9"></script>
+    <script src="js/auth.js?v=5"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('authForm');
+            const btnSubmit = document.getElementById('btnSubmit');
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMsg = document.getElementById('errorMsg');
+            const btnToggleMode = document.getElementById('btnToggleMode');
+            const nameFieldGroup = document.getElementById('nameFieldGroup');
+            const formTitle = document.getElementById('formTitle');
+            const formSubtitle = document.getElementById('formSubtitle');
+            const toggleText = document.getElementById('toggleText');
+            const forgotPwdLink = document.getElementById('forgotPwdLink');
+
+            let isLoginMode = true;
+
+            // Redireccionar si ya está logeado
+            if (window.novaAuth && window.novaAuth.user && window.novaAuth.user.user) {
+                window.location.href = 'index.html';
+            }
+
+            // Cambiar entre Login y Register
+            btnToggleMode.addEventListener('click', (e) => {
+                e.preventDefault();
+                isLoginMode = !isLoginMode;
+                errorAlert.classList.add('hidden');
+
+                if (isLoginMode) {
+                    formTitle.textContent = 'Inicia Sesión';
+                    formSubtitle.textContent = 'Bienvenido de nuevo. Ingresa tus credenciales para acceder a tu cuenta.';
+                    btnSubmit.innerHTML = 'Continuar <span class="material-symbols-outlined">login</span>';
+                    toggleText.textContent = '¿Eres nuevo en WearStore?';
+                    btnToggleMode.textContent = 'Crea una cuenta';
+                    nameFieldGroup.classList.add('hidden');
+                    forgotPwdLink.classList.remove('hidden');
+                } else {
+                    formTitle.textContent = 'Crear Cuenta';
+                    formSubtitle.textContent = 'Únete a WearStore para comprar más rápido y rastrear tus pedidos.';
+                    btnSubmit.innerHTML = 'Registrarse <span class="material-symbols-outlined">person_add</span>';
+                    toggleText.textContent = '¿Ya tienes una cuenta?';
+                    btnToggleMode.textContent = 'Inicia Sesión';
+                    nameFieldGroup.classList.remove('hidden');
+                    forgotPwdLink.classList.add('hidden');
+                }
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorAlert.classList.add('hidden');
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const name = document.getElementById('regName').value;
+
+                // Bloquear UI
+                btnSubmit.disabled = true;
+                const originalText = btnSubmit.innerHTML;
+                btnSubmit.innerHTML = '<span class="spinner"></span> Procesando...';
+
+                try {
+                    if (isLoginMode) {
+                        await window.novaAuth.login(email, password);
+                    } else {
+                        await window.novaAuth.register(email, password, name);
+                    }
+
+                    // Supabase retorna sesión
+                    window.location.href = 'index.html';
+                } catch (err) {
+                    errorMsg.textContent = err.message || 'Ocurrió un error de autenticación.';
+                    errorAlert.classList.remove('hidden');
+                } finally {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = originalText;
+                }
+            });
+        });
+    </script>
+    <script src="js/magnetic.js"></script>
+</body>
+
+</html>
+
+

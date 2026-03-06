@@ -1,0 +1,107 @@
+-- ============================================
+-- CREACIÓN DE TABLAS
+-- ============================================
+
+-- ==========================
+-- 1. Tabla: Tipo de Producto
+-- ==========================
+CREATE TABLE tipo_producto (
+    id_tipo_producto SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT,
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- ==========================
+-- 2. Tabla: Producto
+-- ==========================
+CREATE TABLE producto (
+    id_producto SERIAL PRIMARY KEY,
+    id_tipo_producto INTEGER NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    precio NUMERIC(12,2) NOT NULL CHECK (precio >= 0),
+    stock INTEGER NOT NULL CHECK (stock >= 0),
+    codigo VARCHAR(50) UNIQUE,
+    imagen_url TEXT,
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_producto_tipo
+        FOREIGN KEY (id_tipo_producto)
+        REFERENCES tipo_producto(id_tipo_producto)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- ==========================
+-- 3. Tabla: Cliente
+-- ==========================
+CREATE TABLE cliente (
+    id_cliente SERIAL PRIMARY KEY,
+    nombres VARCHAR(150) NOT NULL,
+    apellidos VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    telefono VARCHAR(20),
+    direccion TEXT,
+    documento VARCHAR(50) UNIQUE,
+    fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+
+-- ==========================
+-- 4. Tabla: Venta
+-- ==========================
+CREATE TABLE venta (
+    id_venta SERIAL PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total NUMERIC(14,2) NOT NULL CHECK (total >= 0),
+    estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE',
+    metodo_pago VARCHAR(50),
+    
+    CONSTRAINT fk_venta_cliente
+        FOREIGN KEY (id_cliente)
+        REFERENCES cliente(id_cliente)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- ==========================
+-- 5. Tabla: Detalle de Venta
+-- ==========================
+CREATE TABLE detalle_venta (
+    id_detalle SERIAL PRIMARY KEY,
+    id_venta INTEGER NOT NULL,
+    id_producto INTEGER NOT NULL,
+    cantidad INTEGER NOT NULL CHECK (cantidad > 0),
+    precio_unitario NUMERIC(12,2) NOT NULL CHECK (precio_unitario >= 0),
+    subtotal NUMERIC(14,2) NOT NULL CHECK (subtotal >= 0),
+
+    CONSTRAINT fk_detalle_venta
+        FOREIGN KEY (id_venta)
+        REFERENCES venta(id_venta)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_detalle_producto
+        FOREIGN KEY (id_producto)
+        REFERENCES producto(id_producto)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- ============================================
+-- ÍNDICES RECOMENDADOS
+-- ============================================
+
+CREATE INDEX idx_producto_tipo ON producto(id_tipo_producto);
+CREATE INDEX idx_venta_cliente ON venta(id_cliente);
+CREATE INDEX idx_detalle_venta ON detalle_venta(id_venta);
+CREATE INDEX idx_detalle_producto ON detalle_venta(id_producto);

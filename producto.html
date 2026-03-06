@@ -1,0 +1,311 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>WearStore | Detalles del Producto</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff9900",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#231b0f",
+                        "brand-blue": "#131921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mecha": ["Rajdhani", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #231b0f;
+            color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 100px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #ff9900;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <!-- Script de Persistencia de Tema Oscuro/Claro (Debe ir antes de cerrar head) -->
+    <script src="js/theme.js"></script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-slate-900 text-slate-900 dark:text-gray-100 font-display min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- TOP BAR INFORMATIVA -->
+    <div
+        class="hidden md:flex bg-black text-slate-300 text-xs py-2 px-10 justify-between items-center border-b border-white/5 relative z-50">
+        <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1"><span
+                    class="material-symbols-outlined text-[14px] text-cyan-500">local_shipping</span> Envío Gratis en
+                pedidos sobre $99</span>
+        </div>
+        <div class="flex items-center self-center gap-6">
+            <a href="#" class="hover:text-cyan-400 transition-colors">Soporte Tecnológico</a>
+            <span class="border-l border-white/20 pl-4 h-full flex items-center pr-2">
+                <select
+                    class="currency-selector bg-[#0f1013] text-slate-300 border-none outline-none cursor-pointer hover:text-cyan-400 transition-colors text-xs font-bold font-['Inter'] rounded-md px-2 py-1">
+                    <option value="USD">USD ($)</option>
+                    <option value="COP">COP ($)</option>
+                    <option value="MXN">MXN ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                </select>
+            </span>
+        </div>
+    </div>
+
+    <!-- Barra de Navegación -->
+    <header
+        class="sticky top-0 left-0 right-0 z-40 bg-[#0f1013]/95 backdrop-blur-md border-b-2 border-cyan-500 shadow-[0_4px_30px_rgba(0,183,255,0.15)] text-white h-[74px] flex items-center px-4 md:px-10 transition-all duration-300">
+        <div class="max-w-[1440px] w-full mx-auto flex items-center justify-between gap-6">
+
+            <!-- Identidad de Marca CSS (Logo) PRO -->
+            <a href="index.html" class="flex items-center gap-3 shrink-0 group cursor-pointer select-none">
+                <div
+                    class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-600 dark:from-cyan-400 dark:to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(255,153,0,0.4)] dark:shadow-[0_0_15px_rgba(0,183,255,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_25px_rgba(255,153,0,0.6)] dark:group-hover:shadow-[0_0_25px_rgba(0,183,255,0.6)] group-hover:rotate-3">
+                    <span class="material-symbols-outlined text-white text-2xl md:text-3xl"
+                        style="font-variation-settings: 'FILL' 1;">diamond</span>
+                </div>
+                <div class="flex flex-col justify-center translate-y-[2px]">
+                    <span class="text-lg md:text-2xl font-black tracking-widest text-white leading-none">WEAR<span
+                            class="text-orange-400 dark:text-cyan-400 transition-colors duration-500">WEAR</span></span>
+                    <span
+                        class="hidden sm:inline-block text-[0.55rem] md:text-[0.65rem] font-bold tracking-[0.25em] text-cyan-500 leading-none mt-1 uppercase">Tech
+                        & Style</span>
+                </div>
+            </a>
+
+            <!-- Barra de Búsqueda -->
+            <div class="flex-1 max-w-2xl mx-4 hidden sm:block">
+                <div class="relative flex items-center w-full">
+                    <input id="searchInput"
+                        class="w-full h-10 px-4 pr-12 rounded-lg text-slate-900 focus:ring-2 focus:ring-primary focus:outline-none border-none"
+                        placeholder="Busca productos, marcas y más..." type="text" />
+                    <button
+                        class="absolute right-0 bg-primary h-10 px-4 rounded-r-lg hover:bg-orange-500 text-brand-blue flex items-center justify-center">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 shrink-0">
+                <!-- Theme Anime Avatar Button (Big Slider) -->
+                <button onclick="toggleTheme()"
+                    class="relative w-20 h-8 md:w-24 md:h-10 bg-gradient-to-r from-orange-400 via-red-500 to-red-600 dark:bg-none dark:bg-slate-800 rounded-full shadow-inner border border-slate-400 dark:border-slate-600 transition-colors duration-300 mx-2 flex items-center group shrink-0 order-2 md:order-none"
+                    title="Cambiar Tema (Anime)">
+
+                    <!-- Contenedor estricto para recortar partículas del fondo -->
+                    <div class="absolute inset-0 rounded-full overflow-hidden pointer-events-none z-0">
+                        <canvas class="themeAnimeCanvas absolute inset-0 w-full h-full"></canvas>
+                    </div>
+                    <span
+                        class="theme-icon-toggle absolute -left-2 top-1/2 -translate-y-1/2 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform dark:translate-x-10 md:dark:translate-x-12 z-10 w-14 h-14 md:w-16 md:h-16 flex items-center justify-center"></span>
+                </button>
+
+                <!-- Cuenta -->
+                <div class="auth-container-ui hidden lg:flex">
+                    <a href="login.html" class="flex flex-col items-start leading-tight cursor-pointer hover:underline">
+                        <span class="text-xs text-slate-300">Hola, Inicia Sesión</span>
+                        <span class="text-sm font-bold">Mi Cuenta</span>
+                    </a>
+                </div>
+                <a href="carrito.html" class="relative cursor-pointer group flex items-center">
+                    <span class="material-symbols-outlined text-3xl">shopping_cart</span>
+                    <span id="cartCounter"
+                        class="absolute -top-1 -right-1 bg-gradient-to-r from-amber-400 to-orange-500 dark:from-cyan-400 dark:to-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-brand-blue transition-all duration-500">0</span>
+                    <span class="hidden md:inline ml-1 font-bold">Carrito</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="pt-4 pb-12 flex-1 relative z-10">
+        <div class="max-w-[1200px] mx-auto px-4 md:px-10">
+            <!-- Breadcrumbs -->
+            <nav class="text-sm text-slate-500 mb-6 flex items-center gap-2">
+                <a href="index.html" class="hover:underline hover:text-primary">Inicio</a>
+                <span class="material-symbols-outlined text-[1rem]">chevron_right</span>
+                <span class="text-slate-900 font-medium">Detalles del Producto</span>
+            </nav>
+
+            <!-- Loader -->
+            <div id="loader" class="loader-container">
+                <div class="spinner"></div>
+                <p class="text-slate-500 font-medium mt-2">Cargando producto...</p>
+            </div>
+
+            <!-- Error o No encontrado -->
+            <div id="errorMessage"
+                class="hidden text-center py-20 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors duration-300">
+                <span
+                    class="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 mb-4 block transition-colors duration-300">search_off</span>
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2 transition-colors duration-300">
+                    Producto no encontrado</h2>
+                <p class="text-slate-500 dark:text-slate-400 mb-6 transition-colors duration-300">El producto que buscas
+                    no existe o ha sido retirado.</p>
+                <a href="index.html"
+                    class="bg-primary text-brand-blue font-bold px-6 py-3 rounded-lg hover:brightness-110 transition-all">Regresar
+                    a la Tienda</a>
+            </div>
+
+            <!-- Contenedor del Producto -->
+            <div id="productContainer"
+                class="hidden flex flex-col gap-10 bg-white dark:bg-slate-800/95 rounded-2xl shadow-[0_0_25px_rgba(0,0,0,0.05)] border border-slate-200 dark:border-slate-700 p-6 md:p-10 transition-colors duration-300">
+                <!-- Se llena con JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de Página Enriquecido (Megamenu) -->
+    <footer class="bg-[#0f1013] text-slate-300 pt-16 pb-8 mt-12 border-t border-cyan-900/50">
+        <div class="max-w-[1440px] mx-auto px-4 md:px-10">
+            <!-- Sección Superior: Suscripción y Redes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 pb-12 border-b border-slate-800">
+                <div>
+                    <h4 class="text-white text-xl font-bold mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-cyan-400">mail</span>
+                        Suscríbete al Boletín Pixel
+                    </h4>
+                    <p class="text-sm text-slate-400 mb-4 max-w-md">Recibe acceso anticipado a los últimos drops de
+                        tecnología, hardware exclusivo y ofertas de temporada directamente en tu correo.</p>
+                    <form id="newsletterForm" class="flex max-w-md" onsubmit="return false;">
+                        <input type="email" id="newsletterEmail" placeholder="Tu correo electrónico..." required
+                            class="flex-1 bg-brand-blue border border-slate-700 rounded-l-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan-500 text-white placeholder-slate-500">
+                        <button type="submit" id="newsletterBtn"
+                            class="bg-cyan-500 text-black px-6 py-2 rounded-r-lg font-bold hover:bg-cyan-400 transition-colors flex items-center justify-center min-w-[100px]">
+                            <span>Unirme</span>
+                        </button>
+                    </form>
+                </div>
+                <div class="md:text-right flex flex-col md:items-end justify-center">
+                    <h4 class="text-white font-bold mb-4">Conéctate al Circuito</h4>
+                    <div class="flex items-center gap-4">
+                        <a href="#"
+                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all group">
+                            <span class="font-bold text-lg group-hover:scale-110 transition-transform">X</span>
+                        </a>
+                        <a href="#"
+                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all group">
+                            <span class="font-bold text-lg group-hover:scale-110 transition-transform">IG</span>
+                        </a>
+                        <a href="#"
+                            class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all group">
+                            <span class="font-bold text-lg group-hover:scale-110 transition-transform">FB</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enlaces Normales -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+                <!-- Se omiten subenlaces para simplicidad, heredando la estructura -->
+            </div>
+
+            <!-- Base del Pie de Página -->
+            <div class="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <!-- Identidad de Marca CSS (Logo) Footer -->
+                <a href="index.html" class="flex items-center gap-3 shrink-0 group cursor-pointer select-none">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-amber-600 dark:from-cyan-400 dark:to-blue-600 flex items-center justify-center shadow-[0_0_10px_rgba(255,153,0,0.4)] dark:shadow-[0_0_10px_rgba(0,183,255,0.4)] transition-all duration-300 group-hover:scale-110 grayscale group-hover:grayscale-0">
+                        <span class="material-symbols-outlined text-white text-xl"
+                            style="font-variation-settings: 'FILL' 1;">diamond</span>
+                    </div>
+                    <div class="flex flex-col justify-center translate-y-[1px]">
+                        <span
+                            class="text-xl font-black tracking-widest text-slate-400 group-hover:text-white transition-colors leading-none">WEAR<span
+                                class="text-slate-500 group-hover:text-orange-400 dark:group-hover:text-cyan-400 transition-colors">WEAR</span></span>
+                    </div>
+                </a>
+                <div class="flex flex-col md:flex-row items-center gap-4 text-xs text-slate-500">
+                    <p>&copy; 2026 Daniel Tijaro. Todos los derechos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notificación Toast -->
+    <div id="toast" class="toast">
+        <span class="material-symbols-outlined" style="color: #4caf50;">check_circle</span>
+        <span id="toastMessage">Producto agregado al carrito</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/currency.js"></script>
+    <script src="js/api.js?v=9"></script>
+    <script src="js/auth.js?v=10"></script>
+    <script src="js/pixelconfirm.js?v=1"></script>
+    <script src="js/producto.js?v=3"></script>
+    <script src="js/newsletter.js"></script>
+    <script src="js/magnetic.js"></script>
+</body>
+
+</html>
+
+
