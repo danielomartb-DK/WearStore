@@ -1,4 +1,4 @@
-/**
+﻿/**
  * js/magnetic.js
  * Añade un efecto interactivo moderno "magnético" a todos los botones principales de la tienda.
  * Se activará el resplandor, la atracción dinámica y ahora: ¡Partículas de Avatar emanando del Puntero!
@@ -20,8 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = cursorCanvas.getContext('2d');
     let width, height;
     let particles = [];
-    let slashes = []; // Almacén de tajos de armas
-    let isEmitting = false;
+        let isEmitting = false;
     let mouseX = 0;
     let mouseY = 0;
 
@@ -48,36 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 150);
     });
 
-    window.addEventListener('mousedown', (e) => {
-        const isDark = document.documentElement.classList.contains('dark');
-
-        // Generador de Tajo del Arma GLOBAL (cortar la pantalla entera no solo botones)
-        slashes.push({
-            x: e.clientX,
-            y: e.clientY,
-            life: 1, // Full vida de opacidad
-            decay: 0.04, // Rapidez del tajo (25 frames dura el corte)
-            angle: (Math.random() * Math.PI) - (Math.PI / 2), // Corte diagonal/horizontal aleatorio
-            maxLength: Math.random() * 80 + 120, // Rango de longitud del haz de luz
-            thickness: isDark ? 3 : 8, // Daga letal y delgada vs Fuego Ancho de Rengoku
-            type: isDark ? 'shadow' : 'fire'
-        });
-
-        // Explosión de Partículas radial por el impacto cinético
-        for (let i = 0; i < 20; i++) {
-            particles.push({
-                x: e.clientX,
-                y: e.clientY,
-                size: Math.random() * 5 + 2,
-                speedX: (Math.random() - 0.5) * 10,
-                speedY: (Math.random() - 0.5) * 10,
-                life: 1,
-                decay: Math.random() * 0.03 + 0.02,
-                hue: isDark ? Math.random() * 40 + 190 : Math.random() * 25 + 5,
-                type: isDark ? 'shadow' : 'fire'
-            });
-        }
-    });
     // --- FIN RASTREO GLOBAL ---
 
     const emitCursorParticles = () => {
@@ -157,46 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // --- RENDER DE TAJOS / CORTES (SLASHES) ---
-        for (let i = slashes.length - 1; i >= 0; i--) {
-            let s = slashes[i];
-            s.life -= s.decay;
-
-            if (s.life <= 0) {
-                slashes.splice(i, 1);
-                continue;
-            }
-
-            // Efecto Látigo: crece rápido y se desvanece
-            let currentLength = s.maxLength * Math.sin(s.life * Math.PI);
-
-            ctx.save();
-            ctx.translate(s.x, s.y);
-            ctx.rotate(s.angle);
-
-            ctx.beginPath();
-
-            if (s.type === 'fire') {
-                // Tajo de curva ancha en forma de luna (Estilo Respiración de la Llama)
-                ctx.moveTo(-currentLength / 2, 0);
-                ctx.quadraticCurveTo(0, -s.thickness * 4 * s.life, currentLength / 2, 0);
-                ctx.quadraticCurveTo(0, -s.thickness * 1.5 * s.life, -currentLength / 2, 0);
-
-                ctx.fillStyle = `hsla(${Math.random() * 20 + 10}, 100%, 65%, ${s.life})`;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = '#f97316';
-            } else {
-                // Tajo recto, punzante militar (Estilo Daga Letal JinWoo)
-                ctx.ellipse(0, 0, currentLength / 2, s.thickness * s.life, 0, 0, Math.PI * 2);
-
-                ctx.fillStyle = `hsla(${Math.random() * 20 + 180}, 100%, 75%, ${s.life * 0.9})`;
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = '#06b6d4';
-            }
-
-            ctx.fill();
-            ctx.restore();
-        }
+        
 
         requestAnimationFrame(animateCursorParticles);
     };
@@ -273,3 +203,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     observer.observe(document.body, { childList: true, subtree: true });
 });
+
